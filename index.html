@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Audio Recorder</title>
+</head>
+<body>
+  <button id="start">Start Recording</button>
+  <button id="stop" disabled>Stop Recording</button>
+  <form id="myForm" method="post" action="/recording">
+    <input type="hidden" id="audioData" name="audioData">
+    <button type="submit" disabled id="submit">Submit</button>
+  </form>
+  <script>
+    let mediaRecorder;
+    let chunks = [];
+    const startButton = document.getElementById('start');
+    const stopButton = document.getElementById('stop');
+    const submitButton = document.getElementById('submit');
+    const audioDataInput = document.getElementById('audioData');
+
+    startButton.onclick = function() {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.start();
+          startButton.disabled = true;
+          stopButton.disabled = false;
+          chunks = [];
+          mediaRecorder.ondataavailable = function(e) {
+            chunks.push(e.data);
+          };
+        })
+        .catch(err => console.log('Error: ' + err));
+    }
+
+    stopButton.onclick = function() {
+      mediaRecorder.stop();
+      startButton.disabled = false;
+      stopButton.disabled = true;
+      submitButton.disabled = false;
+    }
+
+    document.getElementById('myForm').onsubmit = function(e) {
+      e.preventDefault();
+      let blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+      let reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = function() {
+        audioDataInput.value = reader.result;
+        e.target.submit();
+      };
+    }
+  </script>
+</body>
+</html>
