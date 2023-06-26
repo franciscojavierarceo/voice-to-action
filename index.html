@@ -17,6 +17,7 @@
     const stopButton = document.getElementById('stop');
     const submitButton = document.getElementById('submit');
     const audioDataInput = document.getElementById('audioData');
+    const maxRecordingTimeMS = 30000;  // 30 seconds
 
     startButton.onclick = function() {
       navigator.mediaDevices.getUserMedia({ audio: true })
@@ -29,15 +30,26 @@
           mediaRecorder.ondataavailable = function(e) {
             chunks.push(e.data);
           };
+          // Automatically stop recording after 30 seconds
+          setTimeout(() => {
+            if (mediaRecorder.state === 'recording') {
+              mediaRecorder.stop();
+              startButton.disabled = false;
+              stopButton.disabled = true;
+              submitButton.disabled = false;
+            }
+          }, maxRecordingTimeMS);
         })
         .catch(err => console.log('Error: ' + err));
     }
 
     stopButton.onclick = function() {
-      mediaRecorder.stop();
-      startButton.disabled = false;
-      stopButton.disabled = true;
-      submitButton.disabled = false;
+      if (mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        startButton.disabled = false;
+        stopButton.disabled = true;
+        submitButton.disabled = false;
+      }
     }
 
     document.getElementById('myForm').onsubmit = function(e) {
